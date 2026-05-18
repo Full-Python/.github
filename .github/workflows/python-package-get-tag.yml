@@ -1,0 +1,79 @@
+name: Build and Publish Python Package
+on:
+  workflow_call:
+    inputs:
+      source-hash:
+        required: true
+        type: string
+      package-name:
+        required: true
+        type: string
+      tag-regex:
+        required: true
+        type: string
+    outputs:
+      git-tag:
+        description: "Git tag with the version of the package"
+        value: ${{ jobs.get-tag.outputs.git-tag }}
+    secrets:
+      github-token:
+        required: true
+
+jobs:
+  get-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+    steps:
+      - name: Restore Workspace
+        uses: actions/cache/restore@v5
+        with:
+          key: source-${{ inputs.source-hash }}
+          path: ./
+
+      - name: Get Python Package Version
+        id: get-package-version
+        run: |
+          echo "PACKAGE_VERSION=v"`./venv/bin/python -m ${{ inputs.package-name }} --version` >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Check if Tag is Valid
+        id: check-tag
+        run: |
+          if [[ ! ${{ steps.get-package-version.outputs.PACKAGE_VERSION }} =~ ${{ inputs.tag-regex }} ]]; then
+            echo "Version found: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }} is not a valid value for this environment"
+            else 
+            echo "Version found: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }} is a valid value for this environment"
+            echo "VALID_VERSION=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Exit if Invalid Version
+        if: steps.check-tag.outputs.VALID_VERSION != 'true'
+        run: exit 1
+
+      - name: Create Tag
+        id: create-tag
+        continue-on-error: true
+        env:
+          TAG: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
+        run: |
+          git tag ${{ env.TAG }}
+          git push origin ${{ env.TAG }}
+
+      - name: Get Release for Tag
+        id: get-release
+        uses: irvingleonard/github-action-git-get-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+        with:
+          tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
+          doNotFailIfNotFound: true
+
+      - name: Exit if Release Exists
+        if: steps.get-release.outputs.id != null
+        run: exit 1
+
+    outputs:
+      git-tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}

@@ -1,0 +1,69 @@
+name: Build a Python Package
+on:
+  workflow_call:
+    inputs:
+      source-hash:
+        required: true
+        type: string
+      status-check-name:
+        required: true
+        type: string
+      failure-status:
+        required: false
+        type: string
+        default: "failure"
+      failure-description:
+        required: false
+        type: string
+        default: "Build failed"
+    outputs:
+      result:
+        description: "Result of the build process"
+        value: ${{ jobs.build-n-publish.outputs.result }}
+    secrets:
+      github-token:
+        required: true
+
+jobs:
+  build-package:
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore Workspace
+        uses: actions/cache/restore@v5
+        with:
+          key: source-${{ inputs.source-hash }}
+          path: ./
+
+      - name: Install Build Module
+        run: |
+          ./venv/bin/pip install --upgrade build
+
+      - name: Build Package
+        id: build-package
+        run: |
+          ./venv/bin/python3 -m build --no-isolation && echo "RESULT=built" >> "$GITHUB_OUTPUT"
+
+      - name: Set Failure Status for Build
+        if: steps.build-package.outputs.RESULT != 'built'
+        uses: irvingleonard/github-actions-set-commit-status@master
+        with:
+          token: ${{ secrets.github-token }}
+          status: ${{ inputs.failure-status }}
+          description: ${{ inputs.failure-description }}
+          context: ${{ inputs.status-check-name }}
+
+      - name: Exit if Build Failed
+        if: steps.build-package.outputs.RESULT != 'built'
+        run: exit 1
+
+      - name: Update Cache
+        uses: actions/cache/save@v5
+        with:
+          key: build-${{ inputs.source-hash }}
+          path: ./dist/**/*
+
+    outputs:
+      result: ${{ steps.build-package.outputs.RESULT }}

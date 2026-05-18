@@ -1,0 +1,158 @@
+name: Build and Publish Python Package
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        required: true
+        type: string
+      python-version:
+        required: true
+        type: string
+      tag-regex:
+        required: true
+        type: string
+      stable-version:
+        required: true
+        type: boolean
+      env-name:
+        required: true
+        type: string
+    outputs:
+      result:
+        description: "Result of the workflow run"
+        value: ${{ jobs.build-n-publish.outputs.result }}
+    secrets:
+      github-token:
+        required: true
+
+env:
+  STATUS_CHECK_NAME: Python Package Built
+
+jobs:
+  prepare-source:
+    uses: irvingleonard/reusable-workflows/.github/workflows/python-prepare-source.yml@v1
+    with:
+      python-version: ${{ inputs.python-version }}
+
+  create-tag:
+    runs-on: ubuntu-latest
+    needs: prepare-source
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+    environment: ${{ inputs.env-name}}
+    steps:
+      - name: Getting Source
+        uses: actions/download-artifact@v5
+        with:
+          name: source
+
+      - name: Extracting from the Tar file
+        run: |
+          tar -xf source.tar
+
+      - name: Get Python Package Version
+        id: get_package_version
+        run: |
+          echo "PACKAGE_VERSION=v"`./venv/bin/python -m ${{ inputs.package-name }} --version` >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Check if Tag is Valid
+        id: check-tag
+        run: |
+          if [[ ! ${{ steps.get_package_version.outputs.PACKAGE_VERSION }} =~ ${{ inputs.tag-regex }} ]]; then
+            echo "Version found: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }} is not a valid value for this environment"
+            else 
+            echo "Version found: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }} is a valid value for this environment"
+            echo "VALID_VERSION=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Tag
+        id: create-tag
+        if: steps.check-tag.outputs.VALID_VERSION == true
+        continue-on-error: true
+        env:
+          TAG: ${{ steps.get_package_version.outputs.PACKAGE_VERSION  }}
+        run: |
+          git tag ${{ env.TAG }}
+          git push origin ${{ env.TAG }}
+
+      - name: Get Release for Tag
+        if: steps.check-tag.outputs.VALID_VERSION == true
+        id: get_release
+        uses: irvingleonard/github-action-git-get-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+        with:
+          tag: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }}
+          doNotFailIfNotFound: true
+
+    outputs:
+      valid_version: ${{ steps.check-tag.outputs.VALID_VERSION }}
+      tag: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }}
+      release_found: ${{ steps.get_release.outputs.id }}
+
+  build-n-publish:
+    needs: create-tag
+    if: needs.create-tag.outputs.release_found == null && needs.create-tag.outputs.valid_version == 'true'
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env-name}}
+    steps:
+      - name: Getting Source
+        uses: actions/download-artifact@v5
+        with:
+          name: source
+
+      - name: Extracting from the Tar file
+        run: |
+          tar -xf source.tar
+
+      - name: Install Build Module
+        run: |
+          ./venv/bin/pip install --upgrade build
+
+      - name: Build Package
+        id: build-package
+        run: |
+          ./venv/bin/python3 -m build --no-isolation && echo "RESULT=built" >> "$GITHUB_OUTPUT"
+
+      - name: Set Failure Status for Build
+        if: steps.build-package.outputs.RESULT != 'built'
+        uses: irvingleonard/github-actions-set-commit-status@master
+        with:
+          token: ${{ secrets.github-token }}
+          status: "failure"
+          description: "Build failed"
+          context: ${{ env.STATUS_CHECK_NAME }}
+
+      - name: Exit if Build Failed
+        if: steps.build-package.outputs.RESULT != 'built'
+        run: exit 1
+
+      - name: Create Github Pre-Release
+        if: inputs.stable-version != true
+        uses: irvingleonard/github-action-create-release@v1
+        with:
+          tag_name: ${{ needs.create-tag.outputs.tag }}
+          files: dist/*
+          prerelease: true
+
+      - name: Create Github Release
+        if: inputs.stable-version == true
+        uses: irvingleonard/github-action-create-release@v1
+        with:
+          tag_name: ${{ needs.create-tag.outputs.tag }}
+          files: dist/*
+
+      - name: Store as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./
+
+    outputs:
+      result: ${{ steps.build-package.outputs.RESULT }}

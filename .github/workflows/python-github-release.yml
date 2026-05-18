@@ -1,0 +1,53 @@
+name: Build and Publish Python Package
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        required: true
+        type: string
+      python-version:
+        required: true
+        type: string
+      tag-regex:
+        required: true
+        type: string
+      stable-version:
+        required: true
+        type: boolean
+      env-name:
+        required: true
+        type: string
+    secrets:
+      github-token:
+        required: true
+
+env:
+  STATUS_CHECK_NAME: Python Package Built
+
+jobs:
+  github-release:
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore Workspace
+        uses: actions/cache/restore@v5
+        with:
+          key: build-${{ inputs.source-hash }}
+          path: ./dist/**/*
+
+      - name: Create Github Pre-Release
+        if: inputs.stable-version != true
+        uses: irvingleonard/github-action-create-release@v1
+        with:
+          tag_name: ${{ needs.create-tag.outputs.tag }}
+          files: dist/*
+          prerelease: true
+
+      - name: Create Github Release
+        if: inputs.stable-version == true
+        uses: irvingleonard/github-action-create-release@v1
+        with:
+          tag_name: ${{ needs.create-tag.outputs.tag }}
+          files: dist/*

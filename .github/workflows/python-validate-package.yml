@@ -1,0 +1,142 @@
+# Workflow to validate python packages
+
+name: Validate Python Package
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        required: true
+        type: string
+      python-version:
+        required: false
+        type: string
+        default: 3.12
+    secrets:
+      github-token:
+        required: true
+
+env:
+  ALL_VALID_TAGS_REGEX: ^v[0-9]+\.[0-9]+\.[0-9]+(\.(dev|post)[0-9]+)?$
+  STATUS_CHECK_NAME: Valid Python package
+
+jobs:
+  prepare-source:
+    uses: irvingleonard/reusable-workflows/.github/workflows/python-prepare-source.yml@v1
+    with:
+      python-version: ${{ inputs.python-version }}
+
+  validate-version:
+    runs-on: ubuntu-latest
+    needs: prepare-source
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+      statuses: write
+    steps:
+      - name: Getting Source
+        uses: actions/download-artifact@v5
+        with:
+          name: source
+
+      - name: Extracting from the Tar file
+        run: |
+          tar -xf source.tar
+
+      - name: Get Python Package Version
+        id: get_package_version
+        run: |
+          echo "PACKAGE_VERSION=v"`./venv/bin/python -m ${{ inputs.package-name }} --version` >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Check if Version is Valid
+        id: check_version
+        run: |
+          if [[ ! ${{ steps.get_package_version.outputs.PACKAGE_VERSION }} =~ ${{ env.ALL_VALID_TAGS_REGEX }} ]]; then
+            echo "INVALID_TAG=True" >> $GITHUB_OUTPUT
+            echo "Version found: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }} is not a valid semantic version number";
+          else 
+            echo "Version found: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }} is a valid semantic version number"
+          fi
+
+      - name: Set Failure Status for Invalid Version
+        if: steps.check_version.outputs.INVALID_TAG != null
+        uses: irvingleonard/github-actions-set-commit-status@master
+        with:
+          token: ${{ secrets.github-token }}
+          status: "failure"
+          context: ${{ env.STATUS_CHECK_NAME}}
+          description: "Invalid Version: ${{ needs.python-package-get-version.outputs.package_version }}"
+
+      - name: Exit if Version is Invalid
+        if: steps.check_version.outputs.INVALID_TAG != null
+        run: exit 1
+
+      - name: Get Release for Version (Tag)
+        id: get_release
+        uses: irvingleonard/github-action-git-get-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+        with:
+          tag: ${{ steps.get_package_version.outputs.PACKAGE_VERSION }}
+          doNotFailIfNotFound: true
+
+      - name: Set Failure Status for Release Already Found
+        if: steps.get_release.outputs.id != null
+        uses: irvingleonard/github-actions-set-commit-status@master
+        with:
+          token: ${{ secrets.github-token }}
+          status: "failure"
+          context: ${{ env.STATUS_CHECK_NAME }}
+          description: "Release already created for ${{ steps.get_package_version.outputs.PACKAGE_VERSION }}"
+
+      - name: Exit if Release Already Found
+        if: steps.get_release.outputs.id != null
+        run: exit 1
+
+  run-tests:
+    runs-on: ubuntu-latest
+    needs: validate-version
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+      statuses: write
+    steps:
+      - name: Getting Source
+        uses: actions/download-artifact@v5
+        with:
+          name: source
+
+      - name: Extracting from the Tar file
+        run: |
+          tar -xf source.tar
+
+      - name: Install Test Coverage Python Modules
+        run: |
+          ./venv/bin/pip install --upgrade coverage
+
+      - name: Run Tests
+        id: tests
+        run: ./venv/bin/coverage run -m unittest discover -v -s ${{ vars.TESTS_FOLDER || 'tests' }} && echo "TESTS_RESULT=passing" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Set Failure Status for Tests
+        if: steps.tests.outputs.TESTS_RESULT != 'passing'
+        uses: irvingleonard/github-actions-set-commit-status@master
+        with:
+          token: ${{ secrets.github-token }}
+          status: "failure"
+          description: "Tests failing: ${{steps.tests.outputs.FAILED_TESTS}}"
+          context: ${{ env.STATUS_CHECK_NAME }}
+
+      - name: Exit if Tests Failed
+        if: steps.tests.outputs.TESTS_RESULT != 'passing'
+        run: exit 1
+
+      - name: Create success status
+        uses: irvingleonard/github-actions-set-commit-status@master
+        with:
+          token: ${{ secrets.github-token }}
+          status: "success"
+          context: ${{ env.STATUS_CHECK_NAME }}

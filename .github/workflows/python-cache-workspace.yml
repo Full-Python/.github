@@ -1,0 +1,63 @@
+# Workflow to prepare the base source tree
+
+name: Prepare Workspace for Python Package
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        required: false
+        type: string
+        default: 3.12
+    outputs:
+      cache-hash:
+        description: "SHA256 hash of the source files"
+        value: ${{ jobs.prepare-source.outputs.cache-hash }}
+
+jobs:
+  prepare-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Identify Source
+        id: identify-source
+        run: |
+          echo "CACHE_HASH=${{ hashFiles('**/*') }}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Probe Cache
+        uses: actions/cache/restore@v5
+        id: probe-cache
+        with:
+          key: source-${{ steps.identify-source.outputs.CACHE_HASH }}
+          path: ./
+          lookup-ony: true
+
+      - name: Cache is Already Populated
+        if: steps.probe-cache.outputs.cache-hit == 'true'
+        run: exit 0
+
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install Devautotools
+        run: |
+          python3 -m venv venv_devautotools
+          ./venv_devautotools/bin/pip install --upgrade pip
+          ./venv_devautotools/bin/pip install --upgrade devautotools
+
+      - name: Deploy Local Virtual Environment
+        run: |
+          ./venv_devautotools/bin/python -m devautotools deploy_local_venv
+
+      - name: Update Cache
+        uses: actions/cache/save@v5
+        with:
+          key: source-${{ steps.identify-source.outputs.CACHE_HASH }}
+          path: ./
+
+    outputs:
+      cache-hash: ${{ steps.identify-source.outputs.CACHE_HASH }}
