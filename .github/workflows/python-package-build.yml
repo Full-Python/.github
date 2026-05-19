@@ -5,24 +5,15 @@ on:
       source-hash:
         required: true
         type: string
-      status-check-name:
+      workflow:
         required: true
         type: string
-      failure-status:
-        required: false
-        type: string
-        default: "failure"
-      failure-description:
-        required: false
-        type: string
-        default: "Build failed"
-    outputs:
-      result:
-        description: "Result of the build process"
-        value: ${{ jobs.build-n-publish.outputs.result }}
     secrets:
       github-token:
         required: true
+
+env:
+  STATUS_PACKAGE_BUILT: Package Built
 
 jobs:
   build-package:
@@ -51,9 +42,9 @@ jobs:
         uses: irvingleonard/github-actions-set-commit-status@master
         with:
           token: ${{ secrets.github-token }}
-          status: ${{ inputs.failure-status }}
-          description: ${{ inputs.failure-description }}
-          context: ${{ inputs.status-check-name }}
+          status: "failure"
+          description: ${{ env.STATUS_PACKAGE_BUILT }}
+          context: ${{ inputs.workflow }}
 
       - name: Exit if Build Failed
         if: steps.build-package.outputs.RESULT != 'built'
@@ -64,6 +55,3 @@ jobs:
         with:
           key: build-${{ inputs.source-hash }}
           path: ./dist/**/*
-
-    outputs:
-      result: ${{ steps.build-package.outputs.RESULT }}
