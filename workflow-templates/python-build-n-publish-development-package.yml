@@ -34,6 +34,9 @@ jobs:
   build-package:
     needs: [get-tag, cache-workspace]
     uses: Full-Python/.github/.github/workflows/python-package-build.yml@master
+    permissions:
+      contents: write
+      id-token: write
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       workflow: ${{ github.workflow }}
@@ -43,6 +46,9 @@ jobs:
   github-release:
     needs: [build-package, get-tag, cache-workspace]
     uses: Full-Python/.github/.github/workflows/python-github-release.yml@master
+    permissions:
+      contents: write
+      id-token: write
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       stable-version: false
