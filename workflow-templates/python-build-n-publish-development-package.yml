@@ -8,17 +8,17 @@ on:
 
 jobs:
   load-constants:
-    uses: Full-Python/.github/.github/workflows/python-environment-development.yml
+    uses: Full-Python/.github/.github/workflows/python-environment-development.yml@master
 
   cache-workspace:
     needs: load-constants
-    uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml
+    uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml@master
     with:
       python-version: ${{ needs.load-constants.outputs.env.PYTHON_VERSION }}
 
   get-tag:
     needs: [cache-workspace, load-constants]
-    uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml
+    uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml@master
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       package-name: ${{ vars.PACKAGE_NAME }}
@@ -29,7 +29,7 @@ jobs:
 
   build-package:
     needs: [get-tag, cache-workspace]
-    uses: Full-Python/.github/.github/workflows/python-package-build.yml
+    uses: Full-Python/.github/.github/workflows/python-package-build.yml@master
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       workflow: ${{ github.workflow }}
@@ -38,7 +38,7 @@ jobs:
 
   github-release:
     needs: [build-package, get-tag, cache-workspace]
-    uses: Full-Python/.github/.github/workflows/python-github-release.yml
+    uses: Full-Python/.github/.github/workflows/python-github-release.yml@master
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       stable-version: false
