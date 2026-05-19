@@ -1,0 +1,22 @@
+# Workflow to expose environment variables (constants) for development packages
+
+name: Retrieve Development Constants
+on:
+  workflow_call:
+    outputs:
+      env:
+        description: "Development Variables (Constants) as a Context"
+        value: ${{ jobs.just-echo.outputs.env }}
+
+env:
+  PYTHON_VERSION: "3.12"
+  TAG_REGEX: ^v[0-9]+\.[0-9]+\.[0-9]+\.dev[0-9]+$
+
+jobs:
+  just-echo:
+    runs-on: ubuntu-latest
+    steps:
+      - id: ubuntu-echo
+        run: echo 'env=${{ toJSON(env) }}' >> $GITHUB_OUTPUT
+    outputs:
+      env: ${{ fromJSON(steps.ubuntu-echo.outputs.env) }}
