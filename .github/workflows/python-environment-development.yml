@@ -17,6 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: ubuntu-echo
-        run: echo env='${{ toJSON(env) }}' >> $GITHUB_OUTPUT
+        run: echo env='`echo '${{ toJSON(env) }}' | tr -d "\n"`' >> $GITHUB_OUTPUT
     outputs:
       env: ${{ fromJSON(steps.ubuntu-echo.outputs.env) }}
