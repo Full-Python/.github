@@ -22,9 +22,9 @@ jobs:
       - id: ubuntu-echo
         run: |
           echo '${{ toJSON(env) }}' > env.json
-          cat <<EOF
+          cat <<EOF > output_env.py
           ${{ env._LOADER_SCRIPT }}
-          EOF > output_env.py
+          EOF
           cat output_env.py
           python3 -c "import json, os.path.expandvars, subprocess; print(json.dumps(json.load(open('env.json'))))"
           echo env=`echo "'"`$(echo '${{ toJSON(env) }}' | python3 -c "import sys, json; print(json.dumps(json.loads(sys.stdin.read())))")`echo "'"` >> $GITHUB_OUTPUT
