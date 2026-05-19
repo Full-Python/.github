@@ -1,0 +1,63 @@
+# This workflow builds and uploads development python artifacts
+
+name: Build and Publish Python Production Package
+on:
+  push:
+    branches:
+      - stable
+
+env:
+  PYTHON_VERSION: "3.12"
+  TAG_REGEX: ^v[0-9]+\.[0-9]+\.[0-9]+(\.post[0-9]+)?$
+
+jobs:
+  cache-workspace:
+    uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml
+    with:
+      python-version: ${{ env.PYTHON_VERSION }}
+
+  get-tag:
+    needs: cache-workspace
+    uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml
+    with:
+      source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
+      package-name: ${{ vars.package-name }}
+      tag-regex: ${{ env.TAG_REGEX }}
+      workflow: ${{ github.workflow }}
+    secrets:
+      github-token: ${{ secrets.github-token }}
+
+  build-package:
+    needs: get-tag
+    uses: Full-Python/.github/.github/workflows/python-package-build.yml
+    with:
+      source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
+      workflow: ${{ github.workflow }}
+    secrets:
+      github-token: ${{ secrets.github-token }}
+
+  github-release:
+    needs: build-package
+    uses: Full-Python/.github/.github/workflows/python-github-release.yml
+    with:
+      source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
+      stable-version: false
+      tag-name: ${{ jobs.get-tag.outputs.git-tag }}
+    secrets:
+      github-token: ${{ secrets.github-token }}
+
+  pypi-publication:
+    needs: build-package
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Restore Workspace
+        uses: actions/cache/restore@v5
+        with:
+          key: build-${{ jobs.cache-workspace.outputs.cache-hash }}
+          path: ./
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
