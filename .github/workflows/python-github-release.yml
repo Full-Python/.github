@@ -2,19 +2,13 @@ name: Build and Publish Python Package
 on:
   workflow_call:
     inputs:
-      package-name:
-        required: true
-        type: string
-      python-version:
-        required: true
-        type: string
-      tag-regex:
+      source-hash:
         required: true
         type: string
       stable-version:
         required: true
         type: boolean
-      env-name:
+      tag-name:
         required: true
         type: string
     secrets:
@@ -41,7 +35,7 @@ jobs:
         if: inputs.stable-version != true
         uses: irvingleonard/github-action-create-release@v1
         with:
-          tag_name: ${{ needs.create-tag.outputs.tag }}
+          tag_name: ${{ inputs.tag-name }}
           files: dist/*
           prerelease: true
 
@@ -49,5 +43,5 @@ jobs:
         if: inputs.stable-version == true
         uses: irvingleonard/github-action-create-release@v1
         with:
-          tag_name: ${{ needs.create-tag.outputs.tag }}
+          tag_name: ${{ inputs.tag-name }}
           files: dist/*
