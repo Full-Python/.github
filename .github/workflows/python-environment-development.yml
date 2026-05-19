@@ -11,6 +11,9 @@ on:
 env:
   PYTHON_VERSION: "3.12"
   TAG_REGEX: ^v[0-9]+\.[0-9]+\.[0-9]+\.dev[0-9]+$
+  _LOADER_SCRIPT: |
+    from json import dumps as json_dumps, loads as json_loads
+    from pathlib import Path
 
 jobs:
   just-echo:
@@ -19,7 +22,11 @@ jobs:
       - id: ubuntu-echo
         run: |
           echo '${{ toJSON(env) }}' > env.json
-          python3 -c "import json; print(json.dumps(json.load(open('env.json'))))"
+          cat <<EOF
+          ${{ env._LOADER_SCRIPT }}
+          EOF > output_env.py
+          cat output_env.py
+          python3 -c "import json, os.path.expandvars, subprocess; print(json.dumps(json.load(open('env.json'))))"
           echo env=`echo "'"`$(echo '${{ toJSON(env) }}' | python3 -c "import sys, json; print(json.dumps(json.loads(sys.stdin.read())))")`echo "'"` >> $GITHUB_OUTPUT
     outputs:
       env: ${{ fromJSON(steps.ubuntu-echo.outputs.env) }}
