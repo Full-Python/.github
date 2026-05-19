@@ -21,7 +21,7 @@ jobs:
     uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml
     with:
       source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
-      package-name: ${{ vars.package-name }}
+      package-name: ${{ vars.PACKAGE_NAME }}
       tag-regex: ${{ env.TAG_REGEX }}
       workflow: ${{ github.workflow }}
     secrets:
