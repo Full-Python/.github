@@ -1,4 +1,4 @@
-name: Create Git Tag (w/o Release) from Python Package Version
+name: Create Git Tag w/o Release
 on:
   workflow_call:
     inputs:
