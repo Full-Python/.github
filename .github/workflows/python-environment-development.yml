@@ -19,7 +19,7 @@ jobs:
       - id: ubuntu-echo
         run: |
           echo '${{ toJSON(env) }}' > env.json
-          python3 -c "import json; print(json.dumps(json.load('env.json')))"
+          python3 -c "import json; print(json.dumps(json.load(open('env.json'))))"
           echo env=`echo "'"`$(echo '${{ toJSON(env) }}' | python3 -c "import sys, json; print(json.dumps(json.loads(sys.stdin.read())))")`echo "'"` >> $GITHUB_OUTPUT
     outputs:
       env: ${{ fromJSON(steps.ubuntu-echo.outputs.env) }}
