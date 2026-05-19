@@ -114,7 +114,7 @@ jobs:
           token: ${{ secrets.github-token }}
           status: "success"
           description: ${{ env.STATUS_NONEXISTENT_RELEASE }}
-          context: ${{ input`s.workflow }}
+          context: ${{ inputs.workflow }}
 
     outputs:
       git-tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
