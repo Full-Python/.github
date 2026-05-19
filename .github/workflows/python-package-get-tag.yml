@@ -63,7 +63,7 @@ jobs:
           token: ${{ secrets.github-token }}
           status: "error"
           description: ${{ env.STATUS_VALID_VERSION}}
-          context: ${{ input.workflow }}
+          context: ${{ inputs.workflow }}
 
       - name: Exit if Invalid Version
         if: steps.check-tag.outputs.VALID_VERSION != 'true'
@@ -75,7 +75,7 @@ jobs:
           token: ${{ secrets.github-token }}
           status: "success"
           description: ${{ env.STATUS_VALID_VERSION }}
-          context: ${{ input.workflow }}
+          context: ${{ inputs.workflow }}
 
       - name: Create Tag
         id: create-tag
@@ -102,7 +102,7 @@ jobs:
           token: ${{ secrets.github-token }}
           status: "failure"
           description: ${{ env.STATUS_NONEXISTENT_RELEASE }}
-          context: ${{ input.workflow }}
+          context: ${{ inputs.workflow }}
 
       - name: Exit if Release Exists
         if: steps.get-release.outputs.id != null
@@ -114,7 +114,7 @@ jobs:
           token: ${{ secrets.github-token }}
           status: "success"
           description: ${{ env.STATUS_NONEXISTENT_RELEASE }}
-          context: ${{ input.workflow }}
+          context: ${{ input`s.workflow }}
 
     outputs:
       git-tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
