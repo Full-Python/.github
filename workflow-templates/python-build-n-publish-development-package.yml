@@ -13,12 +13,16 @@ env:
 jobs:
   cache-workspace:
     uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml
+    env:
+      PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
     with:
       python-version: ${{ env.PYTHON_VERSION }}
 
   get-tag:
     needs: cache-workspace
     uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml
+    env:
+      TAG_REGEX: ${{ env.TAG_REGEX }}
     with:
       source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
       package-name: ${{ vars.PACKAGE_NAME }}
