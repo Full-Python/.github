@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: ubuntu-echo
-        run: echo env='`echo '${{ toJSON(env) }}' | python3 -c "import sys, json; print(json.dumps(json.loads(sys.stdin.read())))"`' >> $GITHUB_OUTPUT
+        run: |
+          echo '${{ toJSON(env) }}' | python3 -c "import sys, json; print(json.dumps(json.loads(sys.stdin.read())))"
+          echo env='`echo '${{ toJSON(env) }}' | python3 -c "import sys, json; print(json.dumps(json.loads(sys.stdin.read())))"`' >> $GITHUB_OUTPUT
     outputs:
       env: ${{ fromJSON(steps.ubuntu-echo.outputs.env) }}
