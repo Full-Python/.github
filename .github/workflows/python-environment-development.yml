@@ -4,7 +4,7 @@ name: Retrieve Development Constants
 on:
   workflow_call:
     outputs:
-      env:
+      env_json:
         description: "Development Variables (Constants) as a Context"
         value: ${{ jobs.just-echo.outputs.env }}
 
@@ -22,4 +22,4 @@ jobs:
           echo $RESULT
           echo "env=$RESULT" >> $GITHUB_OUTPUT
     outputs:
-      env: ${{ fromJSON(steps.ubuntu-echo.outputs.env) }}
+      env: ${{ steps.ubuntu-echo.outputs.env }}

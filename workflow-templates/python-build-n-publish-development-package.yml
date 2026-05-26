@@ -14,7 +14,7 @@ jobs:
     needs: load-constants
     uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml@master
     with:
-      python-version: ${{ needs.load-constants.outputs.env.PYTHON_VERSION }}
+      python-version: ${{ fromJSON(needs.load-constants.outputs.env_json).PYTHON_VERSION }}
 
   get-tag:
     needs: [cache-workspace, load-constants]
@@ -26,7 +26,7 @@ jobs:
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       package-name: ${{ vars.PACKAGE_NAME }}
-      tag-regex: ${{ needs.load-constants.outputs.env.TAG_REGEX }}
+      tag-regex: ${{ fromJSON(needs.load-constants.outputs.env_json).TAG_REGEX }}
       workflow: ${{ github.workflow }}
     secrets:
       github-token: ${{ secrets.github-token }}
