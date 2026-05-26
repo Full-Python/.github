@@ -29,7 +29,7 @@ jobs:
       tag-regex: ${{ fromJSON(needs.load-constants.outputs.env_json).TAG_REGEX }}
       workflow: ${{ github.workflow }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-package:
     needs: [get-tag, cache-workspace]
@@ -41,7 +41,7 @@ jobs:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       workflow: ${{ github.workflow }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   github-release:
     needs: [build-package, get-tag, cache-workspace]
@@ -54,7 +54,7 @@ jobs:
       stable-version: false
       tag-name: ${{ needs.get-tag.outputs.git-tag }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   pypi-publication:
     needs: [build-package, cache-workspace]
