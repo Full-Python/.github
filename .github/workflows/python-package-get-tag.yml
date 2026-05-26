@@ -18,6 +18,9 @@ on:
       git-tag:
         description: "Git tag with the version of the package"
         value: ${{ jobs.get-tag.outputs.git-tag }}
+      needs-content:
+        description: "Flag signaling if further processing is necessary"
+        value: ${{ jobs.get-version.outputs.valid-version }}
     secrets:
       github-token:
         required: true
@@ -27,7 +30,7 @@ env:
   STATUS_NONEXISTENT_RELEASE: Nonexistent Release
 
 jobs:
-  get-tag:
+  get-version:
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -65,11 +68,8 @@ jobs:
           description: ${{ env.STATUS_VALID_VERSION}}
           context: ${{ inputs.workflow }}
 
-      - name: Exit if Invalid Version
-        if: steps.check-tag.outputs.VALID_VERSION != 'true'
-        run: exit 1
-
       - name: Set Status for Valid Version
+        if: steps.check-tag.outputs.VALID_VERSION == 'true'
         uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
@@ -77,19 +77,32 @@ jobs:
           description: ${{ env.STATUS_VALID_VERSION }}
           context: ${{ inputs.workflow }}
 
+    outputs:
+      valid-version: ${{ steps.check-tag.outputs.VALID_VERSION }}
+      git-tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
+
+  create-tag-no-release:
+    needs: get-version
+    if: needs.get-version.outputs.valid-version == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      statuses: write
+    steps:
       - name: Get Tag
         id: get-tag
         uses: Full-Python/github-action-tag-exists@v1.7.0
         with:
-          tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
+          tag: ${{ needs.get-version.outputs.git-tag  }}
 
       - name: Create Tag
         if: steps.get-tag.outputs.exists != 'true'
         id: create-tag
         uses: Full-Python/github-action-create-tag@v1.0.0
         with:
-          tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
-          message: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
+          tag: ${{ needs.get-version.outputs.git-tag }}
+          message: ${{ needs.get-version.outputs.git-tag }}
           github_token: ${{ secrets.github-token }}
 
       - name: Get Release for Tag
@@ -121,6 +134,3 @@ jobs:
           status: "success"
           description: ${{ env.STATUS_NONEXISTENT_RELEASE }}
           context: ${{ inputs.workflow }}
-
-    outputs:
-      git-tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
