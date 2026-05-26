@@ -5,7 +5,7 @@ on:
   workflow_call:
     outputs:
       env_json:
-        description: "Development Variables (Constants) as a Context"
+        description: "Development Variables (Constants) as a JSON string"
         value: ${{ jobs.just-echo.outputs.env }}
 
 env:

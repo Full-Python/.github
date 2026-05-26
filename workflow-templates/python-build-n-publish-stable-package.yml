@@ -6,62 +6,72 @@ on:
     branches:
       - stable
 
-env:
-  PYTHON_VERSION: "3.12"
-  TAG_REGEX: ^v[0-9]+\.[0-9]+\.[0-9]+(\.post[0-9]+)?$
-
 jobs:
+  load-constants:
+    uses: Full-Python/.github/.github/workflows/python-constants-production.yml@master
+
   cache-workspace:
-    uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml
-    env:
-      PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
+    needs: load-constants
+    uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml@master
+    permissions:
+      actions: write
+      contents: read
     with:
-      python-version: ${{ env.PYTHON_VERSION }}
+      python-version: ${{ fromJSON(needs.load-constants.outputs.env_json).PYTHON_VERSION }}
 
   get-tag:
-    needs: cache-workspace
-    uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml
-    env:
-      TAG_REGEX: ${{ env.TAG_REGEX }}
+    needs: [cache-workspace, load-constants]
+    uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml@master
+    permissions:
+      actions: read
+      contents: write
+      statuses: write
     with:
-      source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
+      source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       package-name: ${{ vars.PACKAGE_NAME }}
-      tag-regex: ${{ env.TAG_REGEX }}
+      tag-regex: ${{ fromJSON(needs.load-constants.outputs.env_json).TAG_REGEX }}
       workflow: ${{ github.workflow }}
     secrets:
-      github-token: ${{ secrets.github-token }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-package:
-    needs: get-tag
-    uses: Full-Python/.github/.github/workflows/python-package-build.yml
+    needs: [get-tag, cache-workspace]
+    uses: Full-Python/.github/.github/workflows/python-package-build.yml@master
+    permissions:
+      actions: write
+      statuses: write
     with:
-      source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
+      source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       workflow: ${{ github.workflow }}
     secrets:
-      github-token: ${{ secrets.github-token }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   github-release:
-    needs: build-package
-    uses: Full-Python/.github/.github/workflows/python-github-release.yml
+    needs: [build-package, get-tag, cache-workspace]
+    uses: Full-Python/.github/.github/workflows/python-github-release.yml@master
+    permissions:
+      actions: read
+      contents: write
     with:
-      source-hash: ${{ jobs.cache-workspace.outputs.cache-hash }}
-      stable-version: false
-      tag-name: ${{ jobs.get-tag.outputs.git-tag }}
+      source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
+      stable-version: true
+      tag-name: ${{ needs.get-tag.outputs.git-tag }}
     secrets:
-      github-token: ${{ secrets.github-token }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   pypi-publication:
-    needs: build-package
+    needs: [build-package, cache-workspace]
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write
     steps:
       - name: Restore Workspace
         uses: actions/cache/restore@v5
         with:
-          key: build-${{ jobs.cache-workspace.outputs.cache-hash }}
+          key: build-${{ needs.cache-workspace.outputs.cache-hash }}
           path: ./
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.0

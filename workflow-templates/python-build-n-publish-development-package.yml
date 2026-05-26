@@ -8,7 +8,7 @@ on:
 
 jobs:
   load-constants:
-    uses: Full-Python/.github/.github/workflows/python-environment-development.yml@master
+    uses: Full-Python/.github/.github/workflows/python-constants-development.yml@master
 
   cache-workspace:
     needs: load-constants
@@ -61,7 +61,7 @@ jobs:
 
   pypi-publication:
     needs: [build-package, cache-workspace]
-    name: Upload release to PyPI
+    name: Upload release to Test PyPI
     runs-on: ubuntu-latest
     permissions:
       contents: read
