@@ -33,7 +33,6 @@ jobs:
       actions: read
       contents: write
       statuses: write
-      id-token: read
     steps:
       - name: Restore Workspace
         uses: actions/cache/restore@v5

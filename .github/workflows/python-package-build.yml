@@ -18,8 +18,8 @@ env:
 jobs:
   build-package:
     permissions:
-      contents: write
-      id-token: write
+      actions: write
+      statuses: write
     runs-on: ubuntu-latest
     steps:
       - name: Restore Workspace

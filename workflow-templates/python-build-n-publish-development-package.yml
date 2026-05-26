@@ -23,10 +23,9 @@ jobs:
     needs: [cache-workspace, load-constants]
     uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml@master
     permissions:
-      actions: read
+      actions: write
       contents: write
       statuses: write
-      id-token: read
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       package-name: ${{ vars.PACKAGE_NAME }}
@@ -39,8 +38,8 @@ jobs:
     needs: [get-tag, cache-workspace]
     uses: Full-Python/.github/.github/workflows/python-package-build.yml@master
     permissions:
-      contents: write
-      id-token: write
+      actions: write
+      statuses: write
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       workflow: ${{ github.workflow }}
