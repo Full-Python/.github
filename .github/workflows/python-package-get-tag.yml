@@ -80,12 +80,11 @@ jobs:
 
       - name: Create Tag
         id: create-tag
-        continue-on-error: true
-        env:
-          TAG: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
-        run: |
-          git tag ${{ env.TAG }}
-          git push origin ${{ env.TAG }}
+        uses: Full-Python/github-action-create-tag@v1.0.0
+        with:
+          tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
+          message: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
+          github_token: ${{ secrets.github-token }}
 
       - name: Get Release for Tag
         id: get-release
