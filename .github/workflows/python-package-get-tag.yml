@@ -60,7 +60,7 @@ jobs:
         if: steps.check-tag.outputs.VALID_VERSION != 'true'
         uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
-          token: ${{ secrets.github-token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           status: "error"
           description: ${{ env.STATUS_VALID_VERSION}}
           context: ${{ inputs.workflow }}
@@ -72,7 +72,7 @@ jobs:
       - name: Set Status for Valid Version
         uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
-          token: ${{ secrets.github-token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           status: "success"
           description: ${{ env.STATUS_VALID_VERSION }}
           context: ${{ inputs.workflow }}
@@ -90,7 +90,7 @@ jobs:
         id: get-release
         uses: Full-Python/github-action-get-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.github-token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
           doNotFailIfNotFound: true
@@ -99,7 +99,7 @@ jobs:
         if: steps.get-release.outputs.id != null
         uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
-          token: ${{ secrets.github-token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           status: "failure"
           description: ${{ env.STATUS_NONEXISTENT_RELEASE }}
           context: ${{ inputs.workflow }}
@@ -111,7 +111,7 @@ jobs:
       - name: Set Status for Nonexisting Release
         uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
-          token: ${{ secrets.github-token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           status: "success"
           description: ${{ env.STATUS_NONEXISTENT_RELEASE }}
           context: ${{ inputs.workflow }}
