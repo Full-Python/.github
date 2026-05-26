@@ -78,7 +78,14 @@ jobs:
           description: ${{ env.STATUS_VALID_VERSION }}
           context: ${{ inputs.workflow }}
 
+      - name: Get Tag
+        id: get-tag
+        uses: Full-Python/github-action-tag-exists@v1.7.0
+        with:
+          tag: ${{ steps.get-package-version.outputs.PACKAGE_VERSION  }}
+
       - name: Create Tag
+        if: steps.get-tag.outputs.exists != 'true'
         id: create-tag
         uses: Full-Python/github-action-create-tag@v1.0.0
         with:
