@@ -25,6 +25,7 @@ jobs:
     permissions:
       actions: write
       contents: write
+      id-token: write
       statuses: write
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
