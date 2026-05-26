@@ -23,9 +23,8 @@ jobs:
     needs: [cache-workspace, load-constants]
     uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml@master
     permissions:
-      actions: write
+      actions: read
       contents: write
-      id-token: write
       statuses: write
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
@@ -51,8 +50,8 @@ jobs:
     needs: [build-package, get-tag, cache-workspace]
     uses: Full-Python/.github/.github/workflows/python-github-release.yml@master
     permissions:
+      actions: read
       contents: write
-      id-token: write
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       stable-version: false
@@ -65,6 +64,7 @@ jobs:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write
     steps:
       - name: Restore Workspace
