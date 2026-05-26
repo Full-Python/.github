@@ -32,7 +32,7 @@ jobs:
         with:
           key: source-${{ steps.identify-source.outputs.CACHE_HASH }}
           path: ./
-          lookup-ony: true
+          lookup-only: true
 
       - name: Cache is Already Populated
         if: steps.probe-cache.outputs.cache-hit == 'true'
