@@ -36,6 +36,7 @@ jobs:
 
   build-package:
     needs: [get-tag, cache-workspace]
+    if: needs.get-tag.outputs.needs-content == 'true'
     uses: Full-Python/.github/.github/workflows/python-package-build.yml@master
     permissions:
       actions: write
@@ -48,6 +49,7 @@ jobs:
 
   github-release:
     needs: [build-package, get-tag, cache-workspace]
+    if: needs.get-tag.outputs.needs-content == 'true'
     uses: Full-Python/.github/.github/workflows/python-github-release.yml@master
     permissions:
       actions: read
@@ -60,7 +62,8 @@ jobs:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
   pypi-publication:
-    needs: [build-package, cache-workspace]
+    needs: [build-package, get-tag, cache-workspace]
+    if: needs.get-tag.outputs.needs-content == 'true'
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     permissions:
