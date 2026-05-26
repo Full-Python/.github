@@ -1,6 +1,6 @@
 {
-  "name": "Build & Publish a Python Package (dev)",
-  "description": "Build a `build` module supporting package and publish the artifacts to GitHub Releases and Test PYPI",
+  "name": "Build & Publish a Development Python Package",
+  "description": "Triggers a module build and publishes the artifacts to Test PYPI and to GitHub Releases as a pre-release",
   "categories": [
     "continuous-integration",
     "Python"
