@@ -39,7 +39,7 @@ jobs:
 
       - name: Set Failure Status for Build
         if: steps.build-package.outputs.RESULT != 'built'
-        uses: irvingleonard/github-actions-set-commit-status@master
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
           status: "failure"
@@ -49,6 +49,14 @@ jobs:
       - name: Exit if Build Failed
         if: steps.build-package.outputs.RESULT != 'built'
         run: exit 1
+
+      - name: Set Status for Build
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
+        with:
+          token: ${{ secrets.github-token }}
+          status: "success"
+          description: ${{ env.STATUS_PACKAGE_BUILT }}
+          context: ${{ inputs.workflow }}
 
       - name: Update Cache
         uses: actions/cache/save@v5
