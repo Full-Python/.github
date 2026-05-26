@@ -58,7 +58,7 @@ jobs:
 
       - name: Set Failure Status for Invalid Version
         if: steps.check-tag.outputs.VALID_VERSION != 'true'
-        uses: Full-Python/github-action-set-commit-status@2.0.1
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
           status: "error"
@@ -70,7 +70,7 @@ jobs:
         run: exit 1
 
       - name: Set Status for Valid Version
-        uses: Full-Python/github-action-set-commit-status@2.0.1
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
           status: "success"
@@ -97,7 +97,7 @@ jobs:
 
       - name: Set Failure Status for Nonexisting Release
         if: steps.get-release.outputs.id != null
-        uses: Full-Python/github-action-set-commit-status@2.0.1
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
           status: "failure"
@@ -109,7 +109,7 @@ jobs:
         run: exit 1
 
       - name: Set Status for Nonexisting Release
-        uses: Full-Python/github-action-set-commit-status@2.0.1
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
           status: "success"
