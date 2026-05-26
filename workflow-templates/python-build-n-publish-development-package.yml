@@ -13,6 +13,9 @@ jobs:
   cache-workspace:
     needs: load-constants
     uses: Full-Python/.github/.github/workflows/python-cache-workspace.yml@master
+    permissions:
+      actions: write
+      contents: read
     with:
       python-version: ${{ fromJSON(needs.load-constants.outputs.env_json).PYTHON_VERSION }}
 
@@ -20,9 +23,10 @@ jobs:
     needs: [cache-workspace, load-constants]
     uses: Full-Python/.github/.github/workflows/python-package-get-tag.yml@master
     permissions:
-      actions: write
+      actions: read
       contents: write
-      id-token: write
+      statuses: write
+      id-token: read
     with:
       source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
       package-name: ${{ vars.PACKAGE_NAME }}
