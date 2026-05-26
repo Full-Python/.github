@@ -19,7 +19,7 @@ on:
         description: "Git tag with the version of the package"
         value: ${{ jobs.get-tag.outputs.git-tag }}
     secrets:
-      github-token:
+      GITHUB_TOKEN:
         required: true
 
 env:

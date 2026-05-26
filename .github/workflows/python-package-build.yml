@@ -9,7 +9,7 @@ on:
         required: true
         type: string
     secrets:
-      github-token:
+      GITHUB_TOKEN:
         required: true
 
 env:
