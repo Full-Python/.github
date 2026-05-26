@@ -1,0 +1,25 @@
+# Workflow to expose environment variables (constants) for python packages
+
+name: Retrieve Python Constants
+on:
+  workflow_call:
+    outputs:
+      env_json:
+        description: "Python Variables (Constants) as a JSON string"
+        value: ${{ jobs.just-echo.outputs.env }}
+
+env:
+  PYTHON_VERSION: "3.12"
+  TAG_REGEX: ^v[0-9]+\.[0-9]+\.[0-9]+(\.(dev|post)[0-9]+)?$
+
+jobs:
+  just-echo:
+    runs-on: ubuntu-latest
+    steps:
+      - id: ubuntu-echo
+        run: |
+          RESULT=$(echo '${{ toJSON(env) }}' | python3 -c "import json, sys; print(json.dumps(json.loads(sys.stdin.read())))")
+          echo $RESULT
+          echo "env=$RESULT" >> $GITHUB_OUTPUT
+    outputs:
+      env: ${{ steps.ubuntu-echo.outputs.env }}

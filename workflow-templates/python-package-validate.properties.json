@@ -1,0 +1,8 @@
+{
+  "name": "Validate Python Package",
+  "description": "Check that current version is valid, runs the test suite, and coverage threshold.",
+  "categories": [
+    "continuous-integration",
+    "Python"
+  ]
+}

@@ -14,6 +14,10 @@ on:
       workflow:
         required: true
         type: string
+      version-hard-fail:
+        required: false
+        type: boolean
+        default: false
     outputs:
       git-tag:
         description: "Git tag with the version of the package"
@@ -67,6 +71,10 @@ jobs:
           status: "error"
           description: ${{ env.STATUS_VALID_VERSION}}
           context: ${{ inputs.workflow }}
+
+      - name: Exit on Invalid Version
+        if: steps.check-tag.outputs.VALID_VERSION != 'true' && inputs.version-hard-fail
+        run: exit 1
 
       - name: Set Status for Valid Version
         if: steps.check-tag.outputs.VALID_VERSION == 'true'
