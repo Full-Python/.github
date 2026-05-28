@@ -75,6 +75,7 @@ jobs:
         with:
           key: build-${{ needs.cache-workspace.outputs.cache-hash }}
           path: ./
+          fail-on-cache-miss: true
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.0
