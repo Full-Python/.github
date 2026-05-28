@@ -30,6 +30,7 @@ jobs:
         with:
           key: build-${{ inputs.source-hash }}
           path: ./dist/**/*
+          fail-on-cache-miss: true
 
       - name: Create Github Pre-Release
         if: inputs.stable-version != true
