@@ -67,7 +67,7 @@ jobs:
     name: Upload release to Test PyPI
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      actions: read
       id-token: write
     steps:
       - name: Restore Workspace
