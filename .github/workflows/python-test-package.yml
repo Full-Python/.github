@@ -10,15 +10,9 @@ on:
       workflow:
         required: true
         type: string
-
-
-      package-name:
-        required: true
-        type: string
-      python-version:
+      coverage-requirement:
         required: false
         type: string
-        default: 3.12
     secrets:
       github-token:
         required: true
@@ -31,8 +25,7 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      contents: read
+      actions: write
       statuses: write
     steps:
       - name: Restore Workspace
@@ -56,16 +49,63 @@ jobs:
         with:
           token: ${{ secrets.github-token }}
           status: "failure"
-          description: ${{ env.STATUS_VALID_VERSION}}
+          description: ${{ env.STATUS_TESTS_PASSED}}
           context: ${{ inputs.workflow }}
 
       - name: Exit if Tests Failed
         if: steps.tests.outputs.TESTS_RESULT != 'passing'
         run: exit 1
 
-      - name: Create success status
-        uses: irvingleonard/github-actions-set-commit-status@master
+      - name: Test Passed
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
           token: ${{ secrets.github-token }}
           status: "success"
-          context: ${{ env.STATUS_CHECK_NAME }}
+          description: ${{ env.STATUS_TESTS_PASSED}}
+          context: ${{ inputs.workflow }}
+
+      - name: Update Cache
+        uses: actions/cache/save@v5
+        with:
+          key: tested-${{ inputs.source-hash }}
+          path: ./
+
+  check-coverage:
+    needs: run-tests
+    if: inputs.coverage-requirement != ""
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      statuses: write
+    steps:
+      - name: Restore Workspace
+        uses: actions/cache/restore@v5
+        with:
+          key: tested-${{ inputs.source-hash }}
+          path: ./
+
+      - name: Check Coverage
+        id: coverage
+        run: ./venv/bin/coverage report --fail-under ${{ inputs.coverage-requirement }} && echo "COVERAGE_RESULT=passing" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Coverage Failed
+        if: steps.coverage.outputs.COVERAGE_RESULT != 'passing'
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
+        with:
+          token: ${{ secrets.github-token }}
+          status: "failure"
+          description: ${{ env.STATUS_COVERAGE_ACHIEVED}}
+          context: ${{ inputs.workflow }}
+
+      - name: Exit if Coverage Failed
+        if: steps.coverage.outputs.COVERAGE_RESULT != 'passing'
+        run: exit 1
+
+      - name: Coverage Passed
+        uses: Full-Python/github-action-set-commit-status@v2.0.1
+        with:
+          token: ${{ secrets.github-token }}
+          status: "success"
+          description: ${{ env.STATUS_COVERAGE_ACHIEVED}}
+          context: ${{ inputs.workflow }}

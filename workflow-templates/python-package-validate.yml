@@ -35,6 +35,19 @@ jobs:
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
+  test-package:
+    needs: [ cache-workspace, get-tag ]
+    uses: Full-Python/.github/.github/workflows/python-test-package.yml@master
+    permissions:
+      actions: write
+      statuses: write
+    with:
+      source-hash: ${{ needs.cache-workspace.outputs.cache-hash }}
+      workflow: ${{ github.workflow }}
+      coverage-requirement: ${{ vars.COVERAGE_REQUIREMENT }}
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
   validate:
     permissions:
       contents: write
