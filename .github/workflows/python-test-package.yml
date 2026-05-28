@@ -72,7 +72,7 @@ jobs:
 
   check-coverage:
     needs: run-tests
-    if: inputs.coverage-requirement != ""
+    if: inputs.coverage-requirement != ''
     runs-on: ubuntu-latest
     permissions:
       actions: write
