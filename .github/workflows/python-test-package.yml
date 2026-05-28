@@ -33,6 +33,7 @@ jobs:
         with:
           key: source-${{ inputs.source-hash }}
           path: ./
+          fail-on-cache-miss: true
 
       - name: Install Test Coverage Python Modules
         run: |

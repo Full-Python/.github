@@ -46,6 +46,7 @@ jobs:
         with:
           key: source-${{ inputs.source-hash }}
           path: ./
+          fail-on-cache-miss: true
 
       - name: Get Python Package Version
         id: get-package-version
