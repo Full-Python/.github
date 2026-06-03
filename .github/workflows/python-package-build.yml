@@ -51,6 +51,14 @@ jobs:
         if: steps.build-package.outputs.RESULT != 'built'
         run: exit 1
 
+      - name: Store Built Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ inputs.source-hash }}
+          path: ./dist/
+          if-no-files-found: error
+          overwrite: true
+
       - name: Set Status for Build
         uses: Full-Python/github-action-set-commit-status@v2.0.1
         with:
@@ -58,9 +66,3 @@ jobs:
           status: "success"
           description: ${{ env.STATUS_PACKAGE_BUILT }}
           context: ${{ inputs.workflow }}
-
-      - name: Update Cache
-        uses: actions/cache/save@v5
-        with:
-          key: build-${{ inputs.source-hash }}
-          path: ./dist/**/*

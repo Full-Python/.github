@@ -71,12 +71,10 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Restore Workspace
-        uses: actions/cache/restore@v5
+      - name: Restore Built Artifacts
+        uses: actions/download-artifact@v8
         with:
-          key: build-${{ needs.cache-workspace.outputs.cache-hash }}
-          path: ./dist/**/*
-          fail-on-cache-miss: true
+          name: dist-${{ needs.cache-workspace.outputs.cache-hash }}
 
       - name: Publish package distributions to Test PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.0

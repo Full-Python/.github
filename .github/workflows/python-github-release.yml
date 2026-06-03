@@ -25,12 +25,10 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - name: Restore Workspace
-        uses: actions/cache/restore@v5
+      - name: Restore Built Artifacts
+        uses: actions/download-artifact@v8
         with:
-          key: build-${{ inputs.source-hash }}
-          path: ./dist/**/*
-          fail-on-cache-miss: true
+          name: dist-${{ inputs.source-hash }}
 
       - name: Create Github Pre-Release
         if: inputs.stable-version != true
